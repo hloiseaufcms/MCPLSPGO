@@ -21,35 +21,28 @@ type Service struct {
 	clientMutex sync.Mutex
 }
 
-func NewService() (*Service, error) {
+// setupLogger initializes the logging for the service
+func setupLogger() (*os.File, error) {
 	logFile, err := os.OpenFile("/tmp/mcp-gopls.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.SetOutput(os.Stdout)
 		log.Printf("Unable to open log file: %v, using stderr", err)
+		return nil, nil // Not returning error as we fallback to stdout
 	} else {
 		log.SetOutput(logFile)
 		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
 	}
 
 	log.Println("Starting MCP LSP Go service...")
+	return logFile, nil
+}
 
-	svc := &Service{
-		logFile: logFile,
-	}
-
-	if err := svc.initLSPClient(); err != nil {
-		if logFile != nil {
-			logFile.Close()
-		}
-		return nil, fmt.Errorf("failed to initialize LSP client: %w", err)
-	}
-
-	svc.server = server.NewMCPServer(
+// setupServer creates and initializes an MCP server
+func setupServer() *server.MCPServer {
+	return server.NewMCPServer(
 		"MCP LSP Go",
 		"1.0.0",
 	)
-
-	return svc, nil
 }
 
 func (s *Service) initLSPClient() error {
@@ -70,7 +63,7 @@ func (s *Service) initLSPClient() error {
 	log.Println("LSP client created, initializing...")
 
 	var initErr error
-	for retries := range 3 {
+	for retries := 0; retries < 3; retries++ {
 		initErr = lspClient.Initialize()
 		if initErr == nil {
 			break
