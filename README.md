@@ -97,8 +97,16 @@ go build -o mcp-gopls cmd/mcp-gopls/main.go
 
 ## Prerequisites
 
-- Go 1.24 or higher
+- Go 1.21 or higher
 - gopls installed (`go install golang.org/x/tools/gopls@latest`)
+
+## Integration with Ollama
+
+This MCP server can be used with any tool that supports the MCP protocol. For Ollama integration:
+
+1. Make sure Ollama is running
+2. The MCP server runs independently and communicates through stdin/stdout
+3. Configure your client to use the MCP server as a tool provider
 
 ## License
 
